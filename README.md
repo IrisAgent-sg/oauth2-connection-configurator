@@ -1,17 +1,19 @@
 # OAuth2 Connection Configurator
 
-A static browser-only helper for building OAuth2 connection settings across common providers.
+A static, client-side helper for configuring OAuth2 app connections across common providers.
+
+Live site: https://irisagent-sg.github.io/oauth2-connection-configurator/
 
 ## Features
 
-- Provider presets for GitHub, Google, Microsoft Entra, Slack, Notion, Discord, Spotify, Dropbox, GitLab, Linear, Atlassian, and Salesforce
-- Authorization URL builder
-- PKCE S256 code verifier/challenge generation
-- Token exchange `curl` snippet
-- Connection JSON export/import
-- Provider-specific setup checklist
-- No backend and no telemetry
+- Provider presets for GitHub, Google, Microsoft, Slack, Discord, Notion, Linear, Reddit, X/Twitter, Spotify, Dropbox, Airtable, HubSpot, Zoom, and custom OAuth2.
+- Generates authorization URLs.
+- Generates PKCE code verifier and SHA-256 challenge locally in the browser.
+- Generates token-exchange `curl` snippets.
+- Generates environment variable templates.
+- Generates provider JSON config.
+- Includes an OAuth2 connection checklist.
 
 ## Security note
 
-Do not enter or store client secrets in this site. Client secrets belong server-side, in a vault or secret manager. This tool is for public OAuth configuration values and local planning only.
+This is a static page. It does not store data and has no backend. Do not paste client secrets into the page. Client secrets belong server-side or in a secrets manager.
