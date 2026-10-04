@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OAuth2 Connection Configurator</title>
+  <meta name="description" content="Build OAuth2 connection settings, authorization URLs, PKCE values, and token exchange snippets for common providers." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --panel: #000;
+      --panel2: #080808;
+      --text: #fff;
+      --muted: rgba(255,255,255,.62);
+      --faint: rgba(255,255,255,.42);
+      --border: rgba(255,255,255,.1);
+      --border2: rgba(255,255,255,.06);
+      --cyan: #00ffff;
+      --blue: #0089ff;
+      --cobalt: #0007cd;
+      --good: #67f5a7;
+      --warn: #ffd166;
+      --bad: #ff6b6b;
+      --shadow: rgba(0,0,0,.15) 4px 4px 0 0;
+      --soft: rgba(0,0,0,.5) 0 20px 70px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 8%, rgba(0,255,255,.13), transparent 28rem),
+        radial-gradient(circle at 92% 16%, rgba(0,7,205,.35), transparent 34rem),
+        linear-gradient(180deg, #111 0%, var(--bg) 42%, #070707 100%);
+      font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    a { color: inherit; }
+    .shell { max-width: 1240px; margin: 0 auto; padding: 0 22px 56px; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(15,15,15,.72);
+      border-bottom: 1px solid var(--border2);
+    }
+    .nav {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; font-weight: 650; letter-spacing: -.02em; }
+    .mark { width: 30px; height: 30px; border: 1px solid var(--border); background: linear-gradient(135deg, rgba(0,255,255,.22), rgba(0,7,205,.32)); display: grid; place-items: center; box-shadow: var(--shadow); }
+    .mark svg { width: 18px; height: 18px; }
+    .navlinks { display: flex; align-items: center; gap: 16px; color: var(--muted); font-size: 14px; }
+    .navlinks a { text-decoration: none; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); background: rgba(255,255,255,.04);
+      padding: 8px 12px; border-radius: 999px; color: var(--muted); font-size: 13px;
+    }
+    .hero { padding: 70px 0 42px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; align-items: center; }
+    h1 { font-size: clamp(44px, 8vw, 92px); line-height: .88; letter-spacing: -.065em; margin: 20px 0 22px; font-weight: 500; }
+    h2 { font-size: clamp(28px, 4vw, 48px); line-height: 1; letter-spacing: -.045em; margin: 0 0 16px; font-weight: 500; }
+    h3 { font-size: 20px; line-height: 1.1; margin: 0 0 10px; font-weight: 560; }
+    p { color: var(--muted); line-height: 1.6; }
+    .lede { font-size: 18px; max-width: 660px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    button, .button {
+      appearance: none; border: 1px solid var(--border); color: var(--text); background: rgba(255,255,255,.05);
+      padding: 10px 14px; font: inherit; border-radius: 5px; cursor: pointer; transition: .16s ease;
+      text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    button:hover, .button:hover { border-color: rgba(0,255,255,.35); transform: translateY(-1px); }
+    .primary { background: #fff; color: #111; border-color: #fff; box-shadow: rgba(0,255,255,.12) 0 0 40px; }
+    .secondary { border-color: var(--blue); background: rgba(0,255,255,.08); }
+    .ghost { color: var(--muted); }
+    .hero-card, .card, .output, .side-panel {
+      border: 1px solid var(--border); background: rgba(0,0,0,.74); border-radius: 6px; box-shadow: var(--soft); position: relative; overflow: hidden;
+    }
+    .hero-card:before, .output:before {
+      content: ""; position: absolute; inset: -1px; pointer-events: none;
+      background: radial-gradient(circle at 20% 0%, rgba(0,255,255,.18), transparent 17rem);
+    }
+    .hero-card { padding: 18px; }
+    .terminal { background: #030303; border: 1px solid var(--border2); border-radius: 4px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: rgba(255,255,255,.82); position: relative; z-index: 1; }
+    .dots { display: flex; gap: 7px; margin-bottom: 14px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); }
+    .line { display: block; margin: 7px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cyan { color: var(--cyan); } .blue { color: #7ecbff; } .green { color: var(--good); } .yellow { color: var(--warn); }
+    .grid { display: grid; grid-template-columns: 1fr 390px; gap: 18px; align-items: start; }
+    .builder { display: grid; gap: 18px; }
+    .card { padding: 20px; box-shadow: none; }
+    .card-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .06em; color: rgba(255,255,255,.66); border: 1px solid var(--border2); padding: 5px 7px; border-radius: 999px; text-transform: uppercase; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    label { display: grid; gap: 7px; color: rgba(255,255,255,.74); font-size: 13px; }
+    input, select, textarea {
+      width: 100%; border: 1px solid var(--border); background: rgba(255,255,255,.035); color: #fff; border-radius: 4px;
+      padding: 11px 12px; font: inherit; outline: none;
+    }
+    textarea { min-height: 86px; resize: vertical; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    input:focus, select:focus, textarea:focus { border-color: rgba(0,255,255,.55); box-shadow: rgba(0,255,255,.12) 0 0 0 3px; }
+    select option { color: #111; }
+    .full { grid-column: 1 / -1; }
+    .switches { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .check { display: flex; align-items: center; gap: 9px; border: 1px solid var(--border2); border-radius: 4px; padding: 10px; color: var(--muted); }
+    .check input { width: auto; accent-color: var(--cyan); }
+    .output { padding: 18px; position: sticky; top: 78px; }
+    .output > * { position: relative; z-index: 1; }
+    .out-block { margin: 14px 0; }
+    .out-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 12px; }
+    pre {
+      margin: 0; background: rgba(0,0,0,.82); border: 1px solid var(--border2); border-radius: 4px; padding: 13px;
+      overflow: auto; color: rgba(255,255,255,.84); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55;
+    }
+    .copy { padding: 6px 8px; font-size: 12px; color: var(--muted); }
+    .side-panel { padding: 18px; box-shadow: none; margin-top: 18px; }
+    .steps { display: grid; gap: 10px; counter-reset: step; margin-top: 14px; }
+    .step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; color: var(--muted); align-items: start; }
+    .step:before { counter-increment: step; content: counter(step); width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyan); }
+    .providers { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-top: 20px; }
+    .provider { border: 1px solid var(--border2); background: rgba(255,255,255,.035); padding: 13px; border-radius: 4px; cursor: pointer; transition: .16s ease; }
+    .provider:hover { border-color: rgba(0,255,255,.3); transform: translateY(-1px); }
+    .provider strong { display: block; margin-bottom: 4px; }
+    .provider span { color: var(--faint); font-size: 12px; }
+    footer { padding: 44px 0 20px; color: var(--faint); font-size: 13px; }
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 40; background: #fff; color: #111; padding: 10px 14px; border-radius: 5px; box-shadow: var(--soft); opacity: 0; transform: translateY(12px); transition: .18s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .warning { border-color: rgba(255,209,102,.28); background: rgba(255,209,102,.08); color: rgba(255,255,255,.76); }
+    @media (max-width: 980px) { .hero, .grid { grid-template-columns: 1fr; } .output { position: static; } .providers { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 680px) { .form-grid, .switches, .providers { grid-template-columns: 1fr; } .navlinks { display: none; } .hero { padding-top: 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <div class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h10" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></span>OAuth2 Configurator</div>
+      <div class="navlinks"><a href="#builder">Builder</a><a href="#providers">Providers</a><a href="#checklist">Checklist</a><span class="pill">client secrets never belong here</span></div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <span class="pill"><span class="cyan">●</span> Static helper for OAuth2 setup</span>
+        <h1>Configure OAuth2 without spelunking docs for sport.</h1>
+        <p class="lede">Pick a provider, enter your client details, generate the authorization URL, PKCE challenge, token exchange snippet, redirect URI notes, and provider-specific checklist. Nothing is sent anywhere. Browser-only. Civilized, allegedly.</p>
+        <div class="actions"><a class="button primary" href="#builder">Start configuring</a><button class="secondary" id="exportBtn">Export JSON</button><label class="button ghost" for="importFile">Import JSON<input id="importFile" type="file" accept="application/json" hidden></label></div>
+      </div>
+      <div class="hero-card" aria-label="Example output preview">
+        <div class="terminal">
+          <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <span class="line"><span class="cyan">provider</span>: github</span>
+          <span class="line"><span class="cyan">redirect_uri</span>: https://app.example.com/oauth/callback</span>
+          <span class="line"><span class="cyan">response_type</span>: code</span>
+          <span class="line"><span class="cyan">scopes</span>: read:user user:email</span>
+          <span class="line"><span class="green">pkce</span>: S256 challenge generated locally</span>
+          <span class="line"><span class="yellow">note</span>: never paste client secrets into browser tools</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="builder" class="grid">
+      <div class="builder">
+        <div class="card">
+          <div class="card-head"><div><h2>OAuth2 builder</h2><p>Use presets, then tune the fields for your exact app registration.</p></div><span class="badge">No backend</span></div>
+          <div class="form-grid">
+            <label>Provider preset<select id="provider"></select></label>
+            <label>Environment<select id="environment"><option>production</option><option>staging</option><option>local</option></select></label>
+            <label>Client ID<input id="clientId" placeholder="abc123.apps.provider.com"></label>
+            <label>Redirect URI<input id="redirectUri" placeholder="https://your-app.com/oauth/callback"></label>
+            <label class="full">Authorization endpoint<input id="authEndpoint"></label>
+            <label>Token endpoint<input id="tokenEndpoint"></label>
+            <label>User info endpoint<input id="userinfoEndpoint"></label>
+            <label>Response type<input id="responseType" value="code"></label>
+            <label class="full">Scopes<textarea id="scopes" placeholder="openid profile email"></textarea></label>
+            <label>State<input id="state" placeholder="csrf-random-state"></label>
+            <label>Audience / Resource<input id="audience" placeholder="optional"></label>
+            <label class="full">Extra authorization params<textarea id="extraParams" placeholder="prompt=consent&#10;access_type=offline"></textarea></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><h3>Security options</h3><p>PKCE is the default because it is 2026 and we have collectively suffered enough.</p></div><span class="badge">Recommended</span></div>
+          <div class="switches">
+            <label class="check"><input id="usePkce" type="checkbox" checked> Use PKCE S256</label>
+            <label class="check"><input id="offline" type="checkbox"> Request offline access</label>
+            <label class="check"><input id="oidc" type="checkbox"> OIDC nonce</label>
+          </div>
+        </div>
+
+        <div class="card warning">
+          <h3>Secret handling</h3>
+          <p>Do not put client secrets in this page, GitHub Pages, frontend JavaScript, screenshots, chat messages, or any other place with the vibes of a public park bench. Keep secrets server-side or in your platform vault.</p>
+        </div>
+
+        <div id="providers" class="card">
+          <div class="card-head"><div><h3>Provider shortcuts</h3><p>Click one to load defaults. You still need to verify scopes and app settings in the provider dashboard.</p></div></div>
+          <div class="providers" id="providerCards"></div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="output">
+          <div class="card-head"><div><h3>Generated config</h3><p>Copy the pieces into your app or integration platform.</p></div><span class="badge" id="statusBadge">Ready</span></div>
+          <div class="out-block"><div class="out-title"><strong>Authorization URL</strong><button class="copy" data-copy="authUrl">Copy</button></div><pre id="authUrl"></pre></div>
+          <div class="out-block"><div class="out-title"><strong>Token exchange curl</strong><button class="copy" data-copy="curlSnippet">Copy</button></div><pre id="curlSnippet"></pre></div>
+          <div class="out-block"><div class="out-title"><strong>Connection JSON</strong><button class="copy" data-copy="jsonConfig">Copy</button></div><pre id="jsonConfig"></pre></div>
+        </div>
+
+        <div id="checklist" class="side-panel">
+          <h3>Setup checklist</h3>
+          <div class="steps" id="checklistItems"></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer>
+      Built as a static GitHub Pages site using Composio + GitHub. OAuth is fussy, but now at least it is fussy in one tab.
+    </footer>
+  </main>
+  <div class="toast" id="toast">Copied</div>
+
+  <script>
+    const providers = {
+      github: { name: 'GitHub', auth: 'https://github.com/login/oauth/authorize', token: 'https://github.com/login/oauth/access_token', userinfo: 'https://api.github.com/user', scopes: 'read:user user:email', notes: ['Register a GitHub OAuth App, not a GitHub App, unless your integration specifically needs installation permissions.', 'Callback URL must exactly match your redirect URI.', 'GitHub does not require PKCE for traditional OAuth Apps, but use it when your flow supports it.'] },
+      google: { name: 'Google', auth: 'https://accounts.google.com/o/oauth2/v2/auth', token: 'https://oauth2.googleapis.com/token', userinfo: 'https://openidconnect.googleapis.com/v1/userinfo', scopes: 'openid profile email', extra: 'prompt=consent\naccess_type=offline', notes: ['Configure OAuth consent screen first.', 'Add every redirect URI explicitly.', 'Use access_type=offline plus prompt=consent when you need a refresh token.'] },
+      microsoft: { name: 'Microsoft Entra', auth: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize', token: 'https://login.microsoftonline.com/common/oauth2/v2.0/token', userinfo: 'https://graph.microsoft.com/oidc/userinfo', scopes: 'openid profile email offline_access User.Read', notes: ['Use tenant-specific endpoints for production when appropriate.', 'Grant admin consent for organization-wide Graph scopes.', 'Redirect URI type must match web/native app configuration.'] },
+      slack: { name: 'Slack', auth: 'https://slack.com/oauth/v2/authorize', token: 'https://slack.com/api/oauth.v2.access', userinfo: 'https://slack.com/api/users.identity', scopes: 'channels:read chat:write users:read', notes: ['Slack separates bot scopes and user scopes.', 'Install app to workspace after updating scopes.', 'Use granular bot permissions whenever possible.'] },
+      notion: { name: 'Notion', auth: 'https://api.notion.com/v1/oauth/authorize', token: 'https://api.notion.com/v1/oauth/token', userinfo: 'https://api.notion.com/v1/users/me', scopes: '', notes: ['Notion OAuth uses owner selection during authorization.', 'Add redirect URI in the integration settings.', 'Share specific pages/databases with the integration after connection.'] },
+      discord: { name: 'Discord', auth: 'https://discord.com/oauth2/authorize', token: 'https://discord.com/api/oauth2/token', userinfo: 'https://discord.com/api/users/@me', scopes: 'identify email', notes: ['Add bot scope only if you are installing a bot.', 'Redirect URI must be registered in the Developer Portal.', 'Use permissions integer carefully for bot installs.'] },
+      spotify: { name: 'Spotify', auth: 'https://accounts.spotify.com/authorize', token: 'https://accounts.spotify.com/api/token', userinfo: 'https://api.spotify.com/v1/me', scopes: 'user-read-email user-read-private', notes: ['Spotify requires exact redirect URI matches.', 'PKCE is recommended for client-side and native apps.', 'Some scopes require quota extension approval.'] },
+      dropbox: { name: 'Dropbox', auth: 'https://www.dropbox.com/oauth2/authorize', token: 'https://api.dropboxapi.com/oauth2/token', userinfo: 'https://api.dropboxapi.com/2/users/get_current_account', scopes: 'account_info.read files.metadata.read', notes: ['Choose scoped access in the Dropbox app console.', 'Set token access type according to short-lived vs legacy behavior.', 'Use offline access if you need refresh tokens.'] },
+      gitlab: { name: 'GitLab', auth: 'https://gitlab.com/oauth/authorize', token: 'https://gitlab.com/oauth/token', userinfo: 'https://gitlab.com/api/v4/user', scopes: 'read_user openid profile email', notes: ['Self-managed GitLab instances use their own base URL.', 'Mark confidential apps only when a backend can keep the secret.', 'Check trusted redirect URI settings.'] },
+      linear: { name: 'Linear', auth: 'https://linear.app/oauth/authorize', token: 'https://api.linear.app/oauth/token', userinfo: 'https://api.linear.app/graphql', scopes: 'read write', notes: ['Linear uses workspace authorization.', 'Use least-privilege scopes.', 'User info is typically fetched through GraphQL after token exchange.'] },
+      atlassian: { name: 'Atlassian', auth: 'https://auth.atlassian.com/authorize', token: 'https://auth.atlassian.com/oauth/token', userinfo: 'https://api.atlassian.com/me', scopes: 'read:me offline_access', audience: 'api.atlassian.com', notes: ['Audience should be api.atlassian.com.', 'Use accessible resources endpoint to find cloud IDs after auth.', 'Scopes vary sharply between Jira and Confluence APIs.'] },
+      salesforce: { name: 'Salesforce', auth: 'https://login.salesforce.com/services/oauth2/authorize', token: 'https://login.salesforce.com/services/oauth2/token', userinfo: 'https://login.salesforce.com/services/oauth2/userinfo', scopes: 'openid profile email refresh_token api', notes: ['Use test.salesforce.com for sandboxes.', 'Connected App policies control refresh token behavior.', 'Production orgs may require admin approval.'] }
+    };
+
+    const el = id => document.getElementById(id);
+    const fields = ['provider','environment','clientId','redirectUri','authEndpoint','tokenEndpoint','userinfoEndpoint','responseType','scopes','state','audience','extraParams','usePkce','offline','oidc'];
+
+    function b64url(buffer) {
+      return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    }
+    function randomString(length = 64) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return b64url(bytes).slice(0, length);
+    }
+    async function sha256(text) {
+      return b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+    }
+    function parseExtra(text) {
+      const params = {};
+      text.split(/\n|&/).map(s => s.trim()).filter(Boolean).forEach(line => {
+        const idx = line.indexOf('=');
+        if (idx === -1) params[line] = '';
+        else params[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+      });
+      return params;
+    }
+    function getState() {
+      return Object.fromEntries(fields.map(id => [id, ['usePkce','offline','oidc'].includes(id) ? el(id).checked : el(id).value]));
+    }
+    function setProvider(key) {
+      const p = providers[key];
+      el('provider').value = key;
+      el('authEndpoint').value = p.auth;
+      el('tokenEndpoint').value = p.token;
+      el('userinfoEndpoint').value = p.userinfo;
+      el('scopes').value = p.scopes || '';
+      el('audience').value = p.audience || '';
+      el('extraParams').value = p.extra || '';
+      render();
+    }
+    async function render() {
+      const s = getState();
+      if (!s.state) el('state').value = randomString(28);
+      const codeVerifier = randomString(86);
+      const codeChallenge = s.usePkce ? await sha256(codeVerifier) : '';
+      const nonce = s.oidc ? randomString(28) : '';
+      const params = new URLSearchParams();
+      params.set('client_id', s.clientId || 'YOUR_CLIENT_ID');
+      params.set('redirect_uri', s.redirectUri || 'https://your-app.example/oauth/callback');
+      params.set('response_type', s.responseType || 'code');
+      if (s.scopes) params.set('scope', s.scopes.trim().replace(/\s+/g, ' '));
+      params.set('state', el('state').value || randomString(28));
+      if (s.audience) params.set('audience', s.audience);
+      if (s.offline && !/access_type=/i.test(s.extraParams)) params.set('access_type', 'offline');
+      if (nonce) params.set('nonce', nonce);
+      Object.entries(parseExtra(s.extraParams || '')).forEach(([k,v]) => params.set(k,v));
+      if (s.usePkce) { params.set('code_challenge', codeChallenge); params.set('code_challenge_method', 'S256'); }
+      const authUrl = (s.authEndpoint || 'https://provider.example/oauth/authorize') + '?' + params.toString();
+      const tokenBody = new URLSearchParams({ grant_type: 'authorization_code', code: 'AUTHORIZATION_CODE_FROM_CALLBACK', redirect_uri: s.redirectUri || 'https://your-app.example/oauth/callback', client_id: s.clientId || 'YOUR_CLIENT_ID' });
+      if (s.usePkce) tokenBody.set('code_verifier', codeVerifier);
+      const curl = `curl -X POST '${s.tokenEndpoint || 'https://provider.example/oauth/token'}' \\\n  -H 'Accept: application/json' \\\n  -H 'Content-Type: application/x-www-form-urlencoded' \\\n  --data '${tokenBody.toString()}'\n\n# If this is a confidential server-side app, add client_secret from your vault server-side only.`;
+      const json = {
+        provider: providers[s.provider]?.name || s.provider,
+        environment: s.environment,
+        client_id: s.clientId || 'YOUR_CLIENT_ID',
+        redirect_uri: s.redirectUri || 'https://your-app.example/oauth/callback',
+        authorization_endpoint: s.authEndpoint,
+        token_endpoint: s.tokenEndpoint,
+        userinfo_endpoint: s.userinfoEndpoint,
+        scopes: (s.scopes || '').trim().split(/\s+/).filter(Boolean),
+        pkce: s.usePkce ? { method: 'S256', code_verifier: codeVerifier, code_challenge: codeChallenge } : false,
+        oidc_nonce: nonce || undefined,
+        audience: s.audience || undefined,
+        extra_authorization_params: parseExtra(s.extraParams || '')
+      };
+      el('authUrl').textContent = authUrl;
+      el('curlSnippet').textContent = curl;
+      el('jsonConfig').textContent = JSON.stringify(json, null, 2);
+      const notes = providers[s.provider]?.notes || [];
+      el('checklistItems').innerHTML = [
+        'Create an OAuth app in the provider dashboard.',
+        'Paste the redirect URI exactly, including protocol and path.',
+        'Copy the client ID into your app config.',
+        'Keep the client secret server-side only, never in this static page.',
+        ...notes
+      ].map(x => `<div class="step"><div>${x}</div></div>`).join('');
+      localStorage.setItem('oauth2-configurator-state', JSON.stringify(getState()));
+    }
+    function toast(text='Copied') { const t = el('toast'); t.textContent = text; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1400); }
+
+    Object.entries(providers).forEach(([key,p]) => {
+      const opt = document.createElement('option'); opt.value = key; opt.textContent = p.name; el('provider').appendChild(opt);
+      const card = document.createElement('div'); card.className = 'provider'; card.innerHTML = `<strong>${p.name}</strong><span>${new URL(p.auth).hostname}</span>`; card.onclick = () => setProvider(key); el('providerCards').appendChild(card);
+    });
+    fields.forEach(id => el(id).addEventListener(['usePkce','offline','oidc'].includes(id) ? 'change' : 'input', render));
+    el('provider').addEventListener('change', e => setProvider(e.target.value));
+    document.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', async () => { await navigator.clipboard.writeText(el(btn.dataset.copy).textContent); toast(); }));
+    el('exportBtn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(getState(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'oauth2-config.json'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    el('importFile').addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      const data = JSON.parse(await file.text());
+      fields.forEach(id => { if (id in data) { if (['usePkce','offline','oidc'].includes(id)) el(id).checked = data[id]; else el(id).value = data[id]; } });
+      render(); toast('Imported');
+    });
+    try {
+      const saved = JSON.parse(localStorage.getItem('oauth2-configurator-state') || 'null');
+      if (saved) fields.forEach(id => { if (id in saved) { if (['usePkce','offline','oidc'].includes(id)) el(id).checked = saved[id]; else el(id).value = saved[id]; } });
+      else setProvider('github');
+    } catch { setProvider('github'); }
+    render();
+  </script>
+</body>
+</html>
